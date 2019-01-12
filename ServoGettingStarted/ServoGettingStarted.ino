@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 //#define SHOULD_CALIBRATE
-//#define AUTO_PILOT
+#define FLY_MODE 1 //1= auto-pilot, 2=flyBySerial, 3=flyByPot
 #define ESC_HIGH_DEFAULT 200
 #define ESC_LOW_DEFAULT 20
 #define NUM_MOTORS 4
@@ -43,11 +43,32 @@ void setup() {
 }
 
 void loop() {
-#ifdef AUTO_PILOT
-  autoPilot();
-#else
-  flyBySerial();
+#ifdef FLY_MODE
+  if(FLY_MODE == 1) {
+    autoPilot();
+  }else if(FLY_MODE == 2) {
+    flyBySerial();
+  }else if(FLY_MODE == 3) {
+    flyByPot();
+  }
 #endif
+}
+
+void flyByPot() {
+  // Send a low signal initially for normal mode
+  for (int i = 0; i < NUM_MOTORS; i++) {
+    Motors[i].Motor.write(ESC_LOW_DEFAULT);
+  }
+
+  while(1) {
+    int potValue = analogRead(A0);
+    int s = map(potValue, 0, 1023, ESC_LOW_DEFAULT, ESC_HIGH_DEFAULT); //Map the pot values to motor values
+    Serial.println(s);
+
+    for (int i = 0; i < NUM_MOTORS; i++) {
+      Motors[i].Motor.write(s);
+    }
+  }
 }
 
 void calibrateThrottle() {
